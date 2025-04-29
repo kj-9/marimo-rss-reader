@@ -192,7 +192,12 @@ def _(defaultdict, parse_date, render, rss, urllib):
 
 @app.cell
 def _(mo):
-    mo.md("""# RSS Feed Reader build with marimo notebook""")
+    mo.md(
+        """
+        # RSS Feed Reader build with marimo notebook
+        [source code](https://github.com/kj-9/marimo-rss-reader)
+        """
+    )
     return
 
 
