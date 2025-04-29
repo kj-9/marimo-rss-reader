@@ -45,7 +45,7 @@ def _(urllib):
 
         return xml_content
 
-    return (fetch_xml,)
+    return
 
 
 @app.cell
@@ -60,58 +60,45 @@ def _(ET, FeedItem, RSSFeed):
         Returns:
             RSSFeed: An object containing the parsed feed information.
         """
-        try:
-            root = ET.fromstring(xml_string)
-            channel = root.find("channel")
-            if channel is None:
-                raise ValueError("Invalid RSS feed: missing 'channel' element")
+        root = ET.fromstring(xml_string)
+        channel = root.find("channel")
+        if channel is None:
+            raise ValueError("No channel found in the XML string.")
 
-            title = (
-                channel.find("title").text
-                if channel.find("title") is not None
-                else None
+        title = (
+            channel.find("title").text if channel.find("title") is not None else None
+        )
+        link = channel.find("link").text if channel.find("link") is not None else None
+        description = (
+            channel.find("description").text
+            if channel.find("description") is not None
+            else None
+        )
+
+        items = []
+        for item_element in channel.findall("item"):
+            item = FeedItem(
+                title=item_element.find("title").text
+                if item_element.find("title") is not None
+                else None,
+                link=item_element.find("link").text
+                if item_element.find("link") is not None
+                else None,
+                description=item_element.find("description").text
+                if item_element.find("description") is not None
+                else None,
+                pubDate=item_element.find("pubDate").text
+                if item_element.find("pubDate") is not None
+                else None,
+                guid=item_element.find("guid").text
+                if item_element.find("guid") is not None
+                else None,
             )
-            link = (
-                channel.find("link").text if channel.find("link") is not None else None
-            )
-            description = (
-                channel.find("description").text
-                if channel.find("description") is not None
-                else None
-            )
+            items.append(item)
 
-            items = []
-            for item_element in channel.findall("item"):
-                item = FeedItem(
-                    title=item_element.find("title").text
-                    if item_element.find("title") is not None
-                    else None,
-                    link=item_element.find("link").text
-                    if item_element.find("link") is not None
-                    else None,
-                    description=item_element.find("description").text
-                    if item_element.find("description") is not None
-                    else None,
-                    pubDate=item_element.find("pubDate").text
-                    if item_element.find("pubDate") is not None
-                    else None,
-                    guid=item_element.find("guid").text
-                    if item_element.find("guid") is not None
-                    else None,
-                )
-                items.append(item)
+        return RSSFeed(title=title, link=link, description=description, items=items)
 
-            feed = RSSFeed(title=title, link=link, description=description, items=items)
-            return feed
-
-        except ET.ParseError as e:
-            print(f"Error parsing XML: {e}")
-            return None
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return None
-
-    return (parse_rss_feed,)
+    return
 
 
 @app.cell
@@ -151,19 +138,30 @@ def _(mo):
     return (query_params,)
 
 
-@app.cell
-def _(fetch_xml, mo, parse_rss_feed, url_input):
+app._unparsable_cell(
+    r"""
     try:
         xml = fetch_xml(url_input.value)
     except Exception as e:
-        mo.stop(True, mo.callout(f"Failed to fetch XML: {e}", kind="danger"))
+        mo.stop(True, mo.callout(f\"Failed to fetch XML: {e}\", kind=\"danger\"))
 
     try:
         rss = parse_rss_feed(xml)
     except Exception as e:
-        mo.stop(True, mo.callout(f"Failed to parse XML: {e}", kind="danger"))
-
-    return rss, xml
+    
+        mo.stop(True, mo.vstack(
+            [mo.callout(f\"Failed to parse XML: {e}\", kind=\"danger\"),
+            mo.ui.code_editor(
+                label=\"Raw XML\",
+                value=xml.decode(\"utf-8\"),
+                language=\"xml\",
+                max_height=400,
+        )]
+        ))≥
+    
+    """,
+    name="_",
+)
 
 
 @app.cell
@@ -211,11 +209,11 @@ def _(mo, query_params):
         on_change=lambda value: query_params.set("url", value),
     )
     url_input
-    return (url_input,)
+    return
 
 
 @app.cell
-def _(mo, rss, xml):
+def _(mo, xml):
     mo.accordion(
         {
             "#### Raw XML": mo.ui.code_editor(
@@ -224,7 +222,7 @@ def _(mo, rss, xml):
                 max_height=400,
             ),
             "#### Parsed Feeds Table": mo.ui.table(
-                data=[item.model_dump() for item in rss.items]
+                data=[item.model_dump() for item in []]
             ),
         }
     )
