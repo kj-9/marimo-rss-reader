@@ -45,7 +45,7 @@ def _(urllib):
 
         return xml_content
 
-    return
+    return (fetch_xml,)
 
 
 @app.cell
@@ -98,7 +98,7 @@ def _(ET, FeedItem, RSSFeed):
 
         return RSSFeed(title=title, link=link, description=description, items=items)
 
-    return
+    return (parse_rss_feed,)
 
 
 @app.cell
@@ -138,30 +138,31 @@ def _(mo):
     return (query_params,)
 
 
-app._unparsable_cell(
-    r"""
+@app.cell
+def _(fetch_xml, mo, parse_rss_feed, url_input):
     try:
         xml = fetch_xml(url_input.value)
     except Exception as e:
-        mo.stop(True, mo.callout(f\"Failed to fetch XML: {e}\", kind=\"danger\"))
+        mo.stop(True, mo.callout(f"Failed to fetch XML: {e}", kind="danger"))
 
     try:
         rss = parse_rss_feed(xml)
     except Exception as e:
-    
-        mo.stop(True, mo.vstack(
-            [mo.callout(f\"Failed to parse XML: {e}\", kind=\"danger\"),
-            mo.ui.code_editor(
-                label=\"Raw XML\",
-                value=xml.decode(\"utf-8\"),
-                language=\"xml\",
-                max_height=400,
-        )]
-        ))≥
-    
-    """,
-    name="_",
-)
+        mo.stop(
+            True,
+            mo.vstack(
+                [
+                    mo.callout(f"Failed to parse XML: {e}", kind="danger"),
+                    mo.ui.code_editor(
+                        label="Raw XML",
+                        value=xml.decode("utf-8"),
+                        language="xml",
+                        max_height=400,
+                    ),
+                ]
+            ),
+        )
+    return rss, xml
 
 
 @app.cell
@@ -209,11 +210,11 @@ def _(mo, query_params):
         on_change=lambda value: query_params.set("url", value),
     )
     url_input
-    return
+    return (url_input,)
 
 
 @app.cell
-def _(mo, xml):
+def _(mo, rss, xml):
     mo.accordion(
         {
             "#### Raw XML": mo.ui.code_editor(
@@ -222,7 +223,7 @@ def _(mo, xml):
                 max_height=400,
             ),
             "#### Parsed Feeds Table": mo.ui.table(
-                data=[item.model_dump() for item in []]
+                data=[item.model_dump() for item in rss.items]
             ),
         }
     )
