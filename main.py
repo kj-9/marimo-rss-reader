@@ -13,7 +13,6 @@ def _():
     from datetime import datetime
 
     from pydantic import BaseModel, Field
-
     return BaseModel, ET, Field, datetime, defaultdict, mo, urllib
 
 
@@ -26,12 +25,12 @@ def _(BaseModel, Field):
         pubDate: str = Field(..., description="Publication date of the feed")
         guid: str = Field(..., description="Unique identifier for the feed item")
 
+
     class RSSFeed(BaseModel):
         title: str = Field(..., description="Title of the feed")
         link: str = Field(..., description="Link to the feed")
         description: str = Field(..., description="Description of the feed")
         items: list[FeedItem] = Field(..., description="List of feed items")
-
     return FeedItem, RSSFeed
 
 
@@ -44,7 +43,6 @@ def _(urllib):
             xml_content = response.read()
 
         return xml_content
-
     return (fetch_xml,)
 
 
@@ -66,9 +64,13 @@ def _(ET, FeedItem, RSSFeed):
             raise ValueError("No channel found in the XML string.")
 
         title = (
-            channel.find("title").text if channel.find("title") is not None else None
+            channel.find("title").text
+            if channel.find("title") is not None
+            else None
         )
-        link = channel.find("link").text if channel.find("link") is not None else None
+        link = (
+            channel.find("link").text if channel.find("link") is not None else None
+        )
         description = (
             channel.find("description").text
             if channel.find("description") is not None
@@ -96,8 +98,9 @@ def _(ET, FeedItem, RSSFeed):
             )
             items.append(item)
 
-        return RSSFeed(title=title, link=link, description=description, items=items)
-
+        return RSSFeed(
+            title=title, link=link, description=description, items=items
+        )
     return (parse_rss_feed,)
 
 
@@ -110,7 +113,6 @@ def _(datetime):
             return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
         except ValueError:
             return None
-
     return (parse_date,)
 
 
@@ -127,6 +129,7 @@ def _(mo):
     {description}"""
 
         return lambda: mo.md(template)
+
 
     # TODO: properly style the output
     return (render,)
@@ -227,7 +230,6 @@ def _(mo, rss, xml):
             ),
         }
     )
-
     return
 
 
@@ -261,7 +263,6 @@ def _(mo, search_term, sidelinks):
             if any(search in title.lower() for title in links.values())
         }
 
-    
         if not filtered_sidelinks:
             mo.md(f"No navigation items found matching '{search_term.value}'.")
     return (filtered_sidelinks,)
