@@ -1,7 +1,7 @@
 import marimo
 
-__generated_with = "0.13.2"
-app = marimo.App(width="medium")
+__generated_with = "0.13.6"
+app = marimo.App(width="medium", app_title="marimo-rss-reader")
 
 
 @app.cell
@@ -193,9 +193,9 @@ def _(defaultdict, parse_date, render, rss, urllib):
 def _(mo):
     mo.md(
         """
-        # RSS Feed Reader build with marimo notebook
-        [source code](https://github.com/kj-9/marimo-rss-reader)
-        """
+    # RSS Feed Reader build with marimo notebook
+    [source code](https://github.com/kj-9/marimo-rss-reader)
+    """
     )
     return
 
