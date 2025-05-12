@@ -238,13 +238,44 @@ def _(mo):
 
 
 @app.cell
-def _(mo, rss, sidelinks):
+def _(mo):
+    search_term = mo.ui.text(placeholder="Search")
+    return (search_term,)
+
+
+@app.cell
+def _(mo, search_term, sidelinks):
+    search = search_term.value.lower()
+
+    if not search:
+        filtered_sidelinks = sidelinks
+    else:
+        # dirty: may not efficient but works
+        filtered_sidelinks = {
+            date: {
+                link: title
+                for link, title in links.items()
+                if search in title.lower()
+            }
+            for date, links in sidelinks.items()
+            if any(search in title.lower() for title in links.values())
+        }
+
+    
+        if not filtered_sidelinks:
+            mo.md(f"No navigation items found matching '{search_term.value}'.")
+    return (filtered_sidelinks,)
+
+
+@app.cell
+def _(filtered_sidelinks, mo, rss, search_term):
     mo.sidebar(
         [
-            mo.md(f" ##[{rss.title}]({rss.link})"),
+            mo.md(f"##[{rss.title}]({rss.link})"),
             mo.md("---"),
+            search_term,
             mo.nav_menu(
-                sidelinks,
+                filtered_sidelinks,
                 orientation="vertical",
             ),
         ],
